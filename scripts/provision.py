@@ -13,7 +13,7 @@ from this file does NOT remove it from the broker — use --teardown for that.
 Why a script and not the admin console: the queue topology and its topic
 subscriptions ARE the design. Clicking them into a UI leaves no artefact, cannot
 be reviewed, and cannot be reproduced by anyone who clones the repo. This file is
-the deployable form of demo-messaging-design-2026-08-23.md section 2.
+the deployable form of docs/messaging-design.md section 2.
 
 Usage:
     python scripts/provision.py            # create

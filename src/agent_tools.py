@@ -1,6 +1,6 @@
 """Tools the Act 3 agents call.
 
-DESIGN RULE, from demo-agentmesh-design-2026-09-02.md §2:
+DESIGN RULE, from docs/agent-mesh-design.md §2:
 no agent invents inventory or credit facts. Every number an agent reasons about
 comes from one of these functions. The model chooses among options; it does not
 supply data. That boundary is what makes "how do you stop the model doing

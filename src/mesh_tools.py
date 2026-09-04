@@ -7,7 +7,7 @@ reasons about — so the docstrings here are interface, not commentary.
 THE BOUNDARY THIS FILE ENFORCES
 Every number an agent reasons about comes from here. The model chooses among
 options; it does not supply data. That is the design rule from
-demo-agentmesh-design-2026-09-02.md §2, and it is what makes "how do you stop the
+docs/agent-mesh-design.md §2, and it is what makes "how do you stop the
 model doing something stupid" answerable with a mechanism.
 
 The logic is imported from agent_tools, which the HTTP control arm also imports.

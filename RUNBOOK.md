@@ -1,6 +1,11 @@
 # Demo Runbook — Meridian Components order exceptions
 
-How to stand this up, and the order to run it in during the presentation.
+How to stand this up and run it, for anyone who wants to recreate this demo.
+
+The scenario is a fictional manufacturer, Meridian Components, presented as a custom demo
+for a customer who has already seen the Solace pitch and has given requirements. Everything
+below assumes that framing: the audience is the customer, and the point of each beat is a
+claim about their problem rather than a tour of the product.
 
 Design and rationale live in [`docs/`](docs/): [problem-statement.md](docs/problem-statement.md)
 (the problem), [messaging-design.md](docs/messaging-design.md) (the architecture and its
@@ -278,7 +283,7 @@ Sign in with the **management** credentials — `SOLACE_ADMIN_USER` / `SOLACE_AD
 
 **Once you are in, everything is identical to the local console.** It is the same application, so **Queues** → pick a queue → **Messages Queued** works exactly as rehearsed, and `#DEAD_MSG_QUEUE` appears in the ordinary queue list.
 
-**Bookmark the direct URL and sign in before the session starts.** The session cookie is what stands between Beat 3 and a login form in front of the room. If it has gone stale by the time you get there, the fallback is SEMP from the publisher window, which proves the same thing without a browser:
+**Bookmark the direct URL and sign in before the session starts.** The session cookie is what stands between Beat 3 and a login form in front of the customer. If it has gone stale by the time you get there, the fallback is SEMP from the publisher window, which proves the same thing without a browser:
 
 ```powershell
 python scripts\queue_depths.py
@@ -456,7 +461,7 @@ python src\publisher.py --duplicate
 
 **Say:** guaranteed delivery is at-least-once. There is no exactly-once — here or anywhere else in this class of system. Consumers dedupe on `(orderId, exceptionId)`. That is the honest answer, and it is the same one Solace's own field team gives.
 
-*"We get exactly-once" is a claim a room of SEs takes apart in one question.*
+*"We get exactly-once" is a claim a technical customer takes apart in one question.*
 
 **Why a flag rather than restarting a consumer.** The obvious way to trigger this beat is to restart a consumer so the broker redelivers an unacked message. That does not work: the dedupe set lives in the consumer **process**, so a restart begins with an empty set and the redelivered copy looks new. The beat cannot fire that way, and it was written that way until 2026-09-02.
 
@@ -476,7 +481,7 @@ The replay log has been deleted from the service so that nothing can trip this a
 
 **What to say if replay comes up:** describe it rather than show it — a new consumer arrives and needs the last 24 hours, so it replays from the broker's own log instead of being backfilled from a database export. Then the design point, which is genuinely useful: replay works only on **non-partitioned** queues, which is why these are not partitioned. At real throughput you would partition the service queues for consumer scale and deliberately keep the audit queue non-partitioned, so replay survives exactly where it is actually needed.
 
-**If asked whether you tried it:** yes, and it did not work on a trial-tier cloud service — the control plane accepted it and the data plane never delivered. That is a better answer than silence, and it is the same pattern as the other five findings in this build: configuration accepted in one place, failing in another, with the error pointing somewhere other than the cause.
+**If the customer asks whether replay works:** say what happened. On a trial-tier cloud service the control plane accepted it and the data plane never delivered. Describing a real result is more useful to them than a rehearsed capability claim, and it is the same pattern as the other findings in this build: configuration accepted in one place, failing in another, with the error pointing somewhere other than the cause. If they are evaluating for production, tell them to verify replay on their own service class before designing around it.
 
 ---
 
@@ -484,7 +489,7 @@ The replay log has been deleted from the service so that nothing can trip this a
 
 ## Act 3 — narrated
 
-Six minutes, no terminal. Nothing here is run. The full design is in `demo-agentmesh-design-2026-09-02.md`; this is the spoken version.
+Six minutes, no terminal. Nothing here is run. The full design is in [`docs/agent-mesh-design.md`](docs/agent-mesh-design.md); this is the spoken version.
 
 **Open on R5, not on "and now, agents."** *Some of these need human judgment; escalation must be deliberate and arrive with the work already gathered.* That makes the agentic tier the answer to something the customer asked for. Opening on the technology invites the fair objection that Agent Mesh is the nascent half of the portfolio and the broker is the substance. Leading with the requirement avoids it.
 
@@ -512,7 +517,7 @@ Six minutes, no terminal. Nothing here is run. The full design is in `demo-agent
 
 **And say the durability finding.** SAM binds agents to `{namespace}/q/a2a/{agent_name}` with `temporary_queue` defaulting to **true**, and a temporary queue dies with its client. Out of the box, a dead agent takes its queue and its in-flight messages with it — the durability claim fails. One line, `USE_TEMPORARY_QUEUES=false`, changes it. *The capability is real; the default is not it, and we found that by building.*
 
-**If asked "did you get it running?"** Answer plainly: the mesh runs, three agents register on durable queues, discovery works, and the control arm is real. The orchestrator's tool-calling path fails against this LLM provider on a thinking-model contract the client library does not round-trip — a library incompatibility, found and diagnosed, not designed around. That is a better answer than a demo that dies live, and it is the honest one.
+**If the customer asks what state the agentic tier is in:** be specific. The mesh runs, three agents register on durable queues, discovery works, and the control arm is real. The orchestrator's tool-calling path fails against this LLM provider on a thinking-model contract the client library does not round-trip — a library incompatibility, not a broker or protocol limitation. Naming the boundary keeps the transport argument intact, which is the part that is actually about Solace.
 
 ---
 
@@ -548,7 +553,7 @@ All four were found by running the scripts rather than reading them. Each report
 
 `start-demo.ps1` had the same class of fault on its standalone path: its preflight hardcoded `localhost:8080` and `admin:admin`, so running it directly against cloud reported the broker down and advised `docker start solace`. It reads the profile now. `demo-up.ps1` passes `-SkipChecks`, which is why it never showed there.
 
-**The lesson worth carrying into the room:** a parse check is not a test. Every one of these scripts parsed cleanly for days and none of them worked.
+**The lesson if you are rebuilding this:** a parse check is not a test. Every one of these scripts parsed cleanly for days and none of them worked.
 
 ### The client-name collision — the worst bug in the build
 
@@ -711,7 +716,7 @@ Roughly 12 minutes for the three that matter. Fan-out and back-pressure are narr
 | `backpressure` | real sequential loop | 13 print statements, **no broker traffic** |
 | `kill` | real — genuinely loses 3/3 | one queue-depth read, then prose |
 
-Running `fanout` or `backpressure` in front of Solace SEs and calling it a comparison invites *"is the broker side actually running?"*, and the answer is no. Narrate those two. `kill` is the one worth running, and only alongside a real agent stop.
+Running `fanout` or `backpressure` in front of a customer and calling it a comparison invites *"is the broker side actually running?"*, and the answer is no. Narrate those two. `kill` is the one worth running, and only alongside a real agent stop.
 
 Making them genuinely two-sided means dispatching real A2A traffic through the mesh and measuring it — which depends on the orchestrator working, so it is downstream of the fix above.
 

@@ -19,7 +19,7 @@ Act 3 is written against the customer brief. Two of the six requirements drive i
 | **R2** | Adding a new consumer must not mean changing the order system. We have a decade of point to point interfaces and we are not adding an eleventh |
 | **R5** | Some of these need human judgment. Escalation has to be deliberate, and arrive with the work already gathered |
 
-The full set of six is in `demo-deck-outline-2026-09-01.md`. R1, R3, R4 and R6 are answered by Act 2 and are not revisited here.
+The full set of six is carried in the slides. R1, R3, R4 and R6 are answered by Act 2 and are not revisited here.
 
 ---
 

@@ -5,7 +5,7 @@ builds a topic string by hand — that is deliberate, because the topic architec
 is the contract between publishers and subscribers, and a contract that is
 re-implemented in five places is not a contract.
 
-Design and rationale: demo-messaging-design-2026-08-23.md
+Design and rationale: docs/messaging-design.md
 
     Root                     Properties
     mc/order/{verb}/v1       {orderId}
