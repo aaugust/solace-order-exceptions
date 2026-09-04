@@ -41,11 +41,21 @@ from solace.messaging.receiver.message_receiver import MessageHandler  # noqa: E
 from solace.messaging.config.message_acknowledgement_configuration import Outcome  # noqa: E402
 
 import broker  # noqa: E402
+import topics  # noqa: E402
 
 QUEUES = {
     "desk-credit": "Q/credit-desk/exceptions",
     "desk-inventory": "Q/inventory-planning/exceptions",
     "desk-audit": "Q/audit/all-exceptions",
+}
+
+# Shown at startup so each desk states what it listens to. These are the same
+# constants provisioning attaches to the queues, so what is printed cannot
+# drift from what is actually subscribed.
+SUBSCRIPTIONS = {
+    "desk-credit": topics.SUB_CREDIT_HOLD,
+    "desk-inventory": topics.SUB_STOCK_SHORTFALL,
+    "desk-audit": topics.SUB_ALL_EXCEPTIONS,
 }
 
 
@@ -177,7 +187,9 @@ def main() -> int:
         receiver.start()
         handler = Handler(receiver, args.role, WORK[args.role])
 
-        print(f"[{args.role}] bound to {queue_name} — Ctrl-C to stop\n")
+        print(f"[{args.role}] queue        {queue_name}")
+        print(f"[{args.role}] subscription {SUBSCRIPTIONS[args.role]}")
+        print("Ctrl-C to stop\n")
         try:
             # Blocking receive rather than receive_async: settling from inside
             # the async callback did not take effect against this broker, and

@@ -78,10 +78,12 @@ Derived from the stated assumptions above, not cited from an industry report —
 |---|---|
 | "Run the batch more often" | Shortens the detection window but doesn't close it, and every increase in frequency raises load on SAP during business hours — which is exactly when it is least welcome. It also does nothing about the email-based resolution, which is the larger half of the delay |
 | "Add point-to-point interfaces for the exception cases" | This is what they already did, and it is why they have a decade of accumulated interfaces. Each new consumer means a new integration, and each one is a change to the producer. The cost of adding the *eleventh* consumer is what stopped them |
-| "Buy a workflow tool" | Routes the work; doesn't shorten detection, and doesn't bring the resolving context with it. The coordinator still chases people for data |
+| "Buy a workflow tool" | Its API takes the exception with full context, and SAP can call it the moment one occurs — so this is a fair answer to *"get a human on it faster."* It is not an answer to *"eleven consumers need this fact"*: an API call delivers to **one** destination, so the audit trail, the dashboards and the eleventh consumer each need their own integration — which is the row above, with a better interface. It also leaves delivery as SAP's problem: if the tool is down, SAP must retry, queue or drop |
 | "Have the WMS call the inventory service directly" | Couples fulfilment availability to inventory-service availability. When inventory is down for maintenance, orders stop. They have been burned by this and are now reasonably conservative about synchronous coupling |
 
-The honest summary: **each individual fix is defensible and none of them addresses the actual shape of the problem**, which is that exception information needs to reach several different consumers, at different speeds, with different reliability requirements, without the producer needing to know who they are.
+The honest summary: **each individual fix is defensible and none of them addresses the actual shape of the problem**, which is that exception information needs to reach several different consumers, at different speeds, with different reliability requirements, without the producer needing to know who they are. In a word, fan-out — and that is the argument against the workflow tool specifically, since its API is otherwise a fair answer.
+
+**Do not claim the broker is what shortens detection.** Emitting at the moment of exception is what does that, and that is a change to SAP whichever thing receives the event — a workflow API would be just as fast. What changes after emission is fan-out, decoupling, per-stream guarantees and durability. Conceding the first point makes the second one credible.
 
 That is a messaging problem. Saying so at this point in the presentation is earned rather than asserted — which is the whole reason Act 1 exists before Act 2.
 

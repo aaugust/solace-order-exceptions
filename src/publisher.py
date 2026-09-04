@@ -248,8 +248,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     # The defaults are the demo's opening sequence, so a bare run needs no
     # arguments. --orders 0 runs until Ctrl-C.
-    ap.add_argument("--orders", type=int, default=10,
-                    help="publish N orders then exit (default 10 = Beat 1; "
+    ap.add_argument("--orders", type=int, default=8,
+                    help="publish N orders then exit (default 8 = Beat 1; "
                          "use 0 to run until Ctrl-C)")
     ap.add_argument("--rate", type=float, default=3.0,
                     help="orders per second (default 3 = Beat 1; "
@@ -306,27 +306,20 @@ def main() -> int:
                 print(f"publishing {args.orders} orders at ~{args.rate}/s\n")
             else:
                 print(f"publishing at ~{args.rate}/s — Ctrl-C to stop\n")
-            # The last three orders raise one of each failure mode, so every
-            # run ends the same way. Everything before them is a clean
-            # lifecycle.
-            #   n-2  credit-hold      order-scoped   -> credit desk
-            #   n-1  stock-shortfall  line-scoped    -> inventory desk
-            #   n    unprocessable    fails 5 times  -> dead message queue
+            # The last two orders raise one exception each, so every run ends
+            # the same way. Everything before them is a clean lifecycle.
+            #   n-1  credit-hold      order-scoped  -> credit desk
+            #   n    stock-shortfall  line-scoped   -> inventory desk
+            # The unprocessable message is not part of this set; publish it on
+            # its own with --poison.
             plan = {}
-            if args.orders >= 3 and not args.random:
-                plan = {args.orders - 2: "credit-hold",
-                        args.orders - 1: "stock-shortfall",
-                        args.orders: "poison"}
+            if args.orders >= 2 and not args.random:
+                plan = {args.orders - 1: "credit-hold",
+                        args.orders: "stock-shortfall"}
 
             while args.orders == 0 or sent < args.orders:
                 n = sent + 1
                 step = plan.get(n)
-                if step == "poison":
-                    publish_poison(service, direct, persistent)
-                    sent += 1
-                    if interval:
-                        time.sleep(interval)
-                    continue
                 order = payloads.new_order()
                 if not args.quiet:
                     print(f"{order['orderId']}  {order['distributor']}"

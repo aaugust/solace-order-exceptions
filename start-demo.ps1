@@ -147,7 +147,7 @@ Start-DemoWindow -Title "1 PUBLISHER"      -Idle
 Write-Host ""
 Write-Host "Four windows open. Window 1 is the PUBLISHER and is yours; 2-4 are the bound consumers." -ForegroundColor Green
 Write-Host ""
-Write-Host "  Beat 1  python src\publisher.py            (10 orders; last 3 break)"
+Write-Host "  Beat 1  python src\publisher.py            (8 orders; last 2 break)"
 Write-Host "  Beat 3  python src\publisher.py --poison       (only if re-running it live)"
 Write-Host ""
 Write-Host "  Forced singles, off-script:  --credit-hold  --shortfall  --duplicate"

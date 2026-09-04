@@ -352,21 +352,20 @@ Narration is a deliberate choice, not a shortfall. One tier demonstrated live an
 ### Beat 1 — normal flow, two delivery modes, and exception granularity
 
 ```powershell
-python src\publisher.py          # 10 orders at ~3/s are the defaults
+python src\publisher.py          # 8 orders at ~3/s are the defaults
 ```
 
-**Show:** lifecycle events tagged `[direct]` streaming past in window 1. The first seven orders are clean and the desk windows stay quiet — most orders do not break. Then the last three fire, one of each failure mode, and all three desks light up.
+**Show:** lifecycle events tagged `[direct]` streaming past in window 1. The first six orders are clean and the desk windows stay quiet — most orders do not break. Then the last two fire and the credit and inventory desks pick them up.
 
 **Say:** two delivery modes on one broker, chosen per stream. Dashboard chatter goes direct because a missed "picked" event refreshes away; exceptions go guaranteed because losing one means an order silently stops. The alternatives force one guarantee across everything — pay spool cost for dashboard traffic, or accept loss on business events.
 
-**The set is scripted, not random.** Ten orders, and the last three always break the same way:
+**The set is scripted, not random.** Eight orders, and the last two always break the same way:
 
 | Order | What happens | Lands on |
 |---|---|---|
-| 1—7 | clean lifecycle | nothing |
-| 8 | credit hold — **order-scoped** | window 2, desk-credit |
-| 9 | stock shortfall — **line-scoped** | window 3, desk-inventory |
-| 10 | unprocessable — five failed attempts | **#DEAD_MSG_QUEUE** |
+| 1—6 | clean lifecycle | nothing |
+| 7 | credit hold — **order-scoped** | window 2, desk-credit |
+| 8 | stock shortfall — **line-scoped** | window 3, desk-inventory |
 
 `--random` restores the ambient ~4% rates for a load run.
 
@@ -397,7 +396,7 @@ Verified on the broker, not assumed. **If asked why not a separate `orderLine` o
 
 *If challenged to prove a topic:* window 5 → **Queues** → `Q/credit-desk/exceptions` → the **Messages Queued** tab → click a message; its destination topic is on the message detail.
 
-**Note the dead message queue is NOT empty after this beat** — order 10 put a message there. Beat 3 explains what already happened rather than producing it fresh.
+**The dead message queue is still empty after this beat.** The unprocessable message is not part of this set — Beat 3 publishes it live with `--poison`.
 
 ### Beat 2 — a consumer goes down
 
@@ -428,10 +427,6 @@ python src\consumer.py desk-inventory
 **Say:** the subscription lives on the queue, not on the consumer. That is why a warehouse system offline for four hours catches up instead of dropping four hours — and it is why per-consumer queues matter. On one shared queue, that outage would have applied back-pressure to every other desk.
 
 ### Beat 3 — the poison message and the dead message queue
-
-**This already happened in Beat 1.** Order 10 of the scripted set was the unprocessable one, so window 2 has the five `FAILED` lines on screen and the dead message queue already holds a message. Scroll back to it rather than publishing again — it is the same demonstration and it costs no time.
-
-Publish another only if you want it to happen live while they watch:
 
 ```powershell
 python src\publisher.py --poison
