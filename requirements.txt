@@ -1,0 +1,10 @@
+# Act 2 — the messaging demo. Installs into .venv.
+#
+# Deliberately small: Agent Mesh and its dependency tree live in a separate
+# virtualenv (.venv-sam, see requirements-sam.txt) so Act 3 can be deleted
+# entirely without touching the demo that runs.
+
+solace-pubsubplus>=1.11.0   # PubSub+ Python messaging API (native Windows wheels)
+certifi>=2024.0.0           # CA bundle for the Solace TLS trust store (see src/broker.py)
+faker>=40.0.0               # plausible order/exception payloads (see src/payloads.py)
+requests>=2.32.0            # SEMP calls for provisioning and queue depths

@@ -1,0 +1,94 @@
+# InventoryAgent — the line-scoped judgment call.
+#
+# Handles stock shortfalls, which are the exception type with genuine judgment
+# in them: substitute, split-ship, transfer, or escalate. Credit holds are a
+# rule and are handled deterministically in Act 2; this agent exists because
+# the shortfall decision is not.
+#
+# It DECIDES: transfer from another site, offer an approved substitute,
+#             split-ship, or backorder.
+# It ESCALATES: when the customer refuses substitutions, or nothing covers it.
+#
+# It cannot write to SAP. Like every agent here it publishes a resolution event
+# on the Act 2 topic architecture, so the system of record stays in charge and
+# the blast radius of a bad model decision is bounded.
+
+log:
+  stdout_log_level: INFO
+  log_file_level: INFO
+  log_file: inventory-agent.log
+
+!include ../shared_config.yaml
+
+apps:
+  - name: inventory-agent_app
+    app_base_path: .
+    app_module: solace_agent_mesh.agent.sac.app
+
+    broker:
+      <<: *broker_connection
+
+    app_config:
+      namespace: ${NAMESPACE}
+      supports_streaming: true
+      agent_name: "InventoryAgent"
+      display_name: "Inventory Planning"
+      model_provider:
+        - "general"
+
+      instruction: |
+        You are the inventory planning desk at Meridian Components, an industrial
+        components distributor.
+
+        You handle stock shortfalls: an ordered LINE cannot be filled from the
+        assigned warehouse. Note this is line-scoped, not order-scoped. A
+        five-line order can have one line short and four perfectly fine, and you
+        are deciding about the one line.
+
+        For every shortfall:
+        1. Call resolve_shortfall with the SKU and the quantity short. It applies
+           the agreed thresholds and tells you the recommended action.
+        2. If you need to explain the reasoning, call check_stock and
+           check_substitutes to show the underlying numbers.
+        3. State the decision plainly in one or two sentences: what will happen
+           to this line and why.
+
+        NEVER invent stock levels, site names, or substitute part numbers. Every
+        number comes from a tool. If the tools say escalate, escalate — say what
+        a human needs to decide and give them the options already priced.
+
+      tools:
+        - tool_type: python
+          component_module: mesh_tools
+          component_base_path: ./src
+          function_name: resolve_shortfall
+        - tool_type: python
+          component_module: mesh_tools
+          component_base_path: ./src
+          function_name: check_stock
+        - tool_type: python
+          component_module: mesh_tools
+          component_base_path: ./src
+          function_name: check_substitutes
+
+      session_service:
+        type: "memory"
+        default_behavior: "PERSISTENT"
+      artifact_service: *default_artifact_service
+
+      agent_card:
+        description: "Resolves line-scoped stock shortfalls: transfer, substitute, split-ship, or escalate."
+        defaultInputModes: [text]
+        defaultOutputModes: [text]
+        skills:
+          - id: resolve_shortfall
+            name: Resolve Stock Shortfall
+            description: "Decide how to fill a short order line, or escalate it with the options priced."
+
+      agent_card_publishing:
+        interval_seconds: 10
+      agent_discovery:
+        enabled: true
+      inter_agent_communication:
+        allow_list: ["*"]
+        request_timeout_seconds: 60

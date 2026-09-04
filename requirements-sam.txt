@@ -1,0 +1,13 @@
+# Act 3 — Solace Agent Mesh. Installs into a SEPARATE virtualenv, .venv-sam.
+#
+#   python -m venv .venv-sam
+#   .\.venv-sam\Scripts\Activate.ps1
+#   pip install -r requirements-sam.txt
+#
+# Kept apart from requirements.txt on purpose: SAM pulls a large dependency
+# tree, and Act 2 must stay installable and runnable without any of it.
+
+solace-agent-mesh~=1.28.8   # the agent mesh runtime
+fastapi>=0.115.0            # HTTP control arm for the Act 3 transport comparison
+uvicorn>=0.30.0             # serves the HTTP control arm
+certifi>=2024.0.0           # CA bundle for the Solace TLS trust store

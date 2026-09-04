@@ -1,0 +1,55 @@
+﻿shared_config:
+  - models:
+      # Both roles point at the same model on purpose. The original plan put the
+      # planning role on paid Claude Sonnet because free-tier Flash was judged
+      # marginal for orchestration - but that judgement was made about
+      # gemini-2.5-flash, which now 404s for new API keys. 3.6 Flash is three
+      # generations newer, so measure before paying.
+      planning: &planning_model
+        # Gemini free tier forbids cached content outright
+        # (TotalCachedContentStorageTokensPerModelFreeTier limit=0), and SAM
+        # defaults this to "5m", which fails every request. Found 2026-09-03.
+        cache_strategy: none
+        model: ${LLM_SERVICE_PLANNING_MODEL_NAME}
+        api_base: ${LLM_SERVICE_ENDPOINT}
+        api_key: ${LLM_SERVICE_API_KEY}
+
+      general: &general_model
+        cache_strategy: none
+        model: ${LLM_SERVICE_GENERAL_MODEL_NAME}
+        api_base: ${LLM_SERVICE_ENDPOINT}
+        api_key: ${LLM_SERVICE_API_KEY}
+  - broker_connection: &broker_connection
+      dev_mode: ${SOLACE_DEV_MODE, false}
+      broker_url: ${SOLACE_BROKER_URL, ws://localhost:8008}
+      broker_username: ${SOLACE_BROKER_USERNAME, default}
+      broker_password: ${SOLACE_BROKER_PASSWORD, default}
+      broker_vpn: ${SOLACE_BROKER_VPN, default}
+      temporary_queue: ${USE_TEMPORARY_QUEUES, true}
+      
+
+  - services:
+    # Default session service configuration
+    session_service: &default_session_service
+      type: "memory"
+      default_behavior: "PERSISTENT"
+    
+    # Default artifact service configuration
+    artifact_service: &default_artifact_service
+      type: "filesystem"
+      base_path: "/tmp/samv2"
+      artifact_scope: namespace
+    
+    # Default data tools configuration
+    data_tools_config: &default_data_tools_config
+      sqlite_memory_threshold_mb: 100
+      max_result_preview_rows: 50
+      max_result_preview_bytes: 4096
+
+    # Auto-summarization configuration (prevents "too many tokens" errors)
+    # Enabled by default to prevent context limit issues in long conversations
+    auto_summarization: &default_auto_summarization
+      # Percentage of conversation to compact when threshold exceeded
+      # Conservative default: 0.25 = 25%
+      # Range: 0.0 - 1.0 (e.g., 0.25 = 25%, 0.5 = 50%, 0.8 = 80%)
+      compaction_percentage: ${SAM_COMPACTION_PERCENTAGE, 0.25}

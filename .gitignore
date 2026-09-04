@@ -1,0 +1,26 @@
+# --- Secrets: never commit ---
+.env
+.env.key
+.env.cloud
+.env.bak*
+certs/
+
+# --- Virtualenvs ---
+.venv/
+.venv-sam/
+
+# --- Python bytecode ---
+__pycache__/
+*.pyc
+
+# --- Runtime state: SAM databases, logs, session stores ---
+*.db
+*.db-journal
+*.log
+.sam/
+
+# --- Local working files ---
+backup-*/
+*.bak
+*.bak-*
+*.bak.*

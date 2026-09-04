@@ -1,0 +1,88 @@
+# CreditAgent — the order-scoped decision.
+#
+# Handles credit holds, which are order-scoped: one decision, taken once, for
+# the whole order. Contrast InventoryAgent, which decides per LINE. The pair
+# exists so the granularity distinction is visible in Act 3 as well as Act 2.
+#
+# It DECIDES: release against a payment in flight, or release within tolerance.
+# It ESCALATES: prior disputes, orders above the auto-resolve ceiling, or a
+#               plain over-limit with nothing covering it.
+#
+# It cannot write to SAP. Like every agent here it publishes a resolution event
+# on the Act 2 topic architecture, so the system of record stays in charge and
+# the blast radius of a bad model decision is bounded.
+
+log:
+  stdout_log_level: INFO
+  log_file_level: INFO
+  log_file: credit-agent.log
+
+!include ../shared_config.yaml
+
+apps:
+  - name: credit-agent_app
+    app_base_path: .
+    app_module: solace_agent_mesh.agent.sac.app
+
+    broker:
+      <<: *broker_connection
+
+    app_config:
+      namespace: ${NAMESPACE}
+      supports_streaming: true
+      agent_name: "CreditAgent"
+      display_name: "Credit Desk"
+      model_provider:
+        - "general"
+
+      instruction: |
+        You are the credit desk at Meridian Components, an industrial components
+        distributor selling through a dealer channel.
+
+        You handle credit holds: an order pushes a distributor past their credit
+        limit. This is ORDER-scoped — one decision for the whole order, unlike a
+        stock shortfall which is decided per line.
+
+        For every hold:
+        1. Call resolve_credit_hold with the account and the order value. It
+           applies the agreed tolerance and thresholds and tells you the
+           recommended action.
+        2. If you need to explain the reasoning, call check_credit_standing to
+           show limit, balance, headroom and any payment in flight.
+        3. State the decision plainly: release or hold, and why.
+
+        NEVER invent credit limits, balances, or payment status. Every number
+        comes from a tool. Prior disputes always escalate regardless of the
+        arithmetic — that is a relationship judgement, not a credit one.
+
+      tools:
+        - tool_type: python
+          component_module: mesh_tools
+          component_base_path: ./src
+          function_name: resolve_credit_hold
+        - tool_type: python
+          component_module: mesh_tools
+          component_base_path: ./src
+          function_name: check_credit_standing
+
+      session_service:
+        type: "memory"
+        default_behavior: "PERSISTENT"
+      artifact_service: *default_artifact_service
+
+      agent_card:
+        description: "Resolves order-scoped credit holds: release within tolerance or against payment in flight, or escalate."
+        defaultInputModes: [text]
+        defaultOutputModes: [text]
+        skills:
+          - id: resolve_credit_hold
+            name: Resolve Credit Hold
+            description: "Decide whether to release a held order, or escalate it with the account context attached."
+
+      agent_card_publishing:
+        interval_seconds: 10
+      agent_discovery:
+        enabled: true
+      inter_agent_communication:
+        allow_list: ["*"]
+        request_timeout_seconds: 60
